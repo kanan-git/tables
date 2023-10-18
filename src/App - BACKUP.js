@@ -6,11 +6,13 @@ import { useState, useEffect, useRef } from 'react';
 import './global.css';
 
 function App() {
+  // const [table, setTable] = useState(null)
   const [header, setHeader] = useState(null)
   const [main, setMain] = useState(null)
 
   async function handleTable(file) {
     const inputFile = await readXlsxFile(file.files[0])
+    // const rowElements = []
     const headElements = []
     const mainElements = []
     for(var row=inputFile.length-1; row>=0; row--) {
@@ -35,17 +37,25 @@ function App() {
             </div>
           </td>)
         }
+        // rowElements.push(cellsArr)
         headElements.push(cellsArr)
       } else {
         for(var col=0; col<inputFile[row].length; col++) {
           cellsArr.push(<td key={`${row+1}${col}`} id={`r${row+1}c${col}`} className="cells" 
           style={{border: "1px solid #000000", borderCollapse: "collapse"}}> {inputFile[row+1][col]} </td>)
         }
+        // rowElements.push(cellsArr)
         mainElements.push(cellsArr)
       }
     }
+    // const tableElements = []
     const headersOfTable = []
     const mainOfTable = []
+    // rowElements.map(
+    //   (rows, index) => {
+    //     tableElements.push(<tr className="rows" id={rowElements.length-index} key={rowElements.length-index}> {rows} </tr>)
+    //   }
+    // )
     headElements.map(
       (rows, index) => {
         headersOfTable.push(<tr className="rows" id={0} key={0}> {rows} </tr>)
@@ -56,6 +66,7 @@ function App() {
         mainOfTable.push(<tr className="rows" id={mainElements.length-index} key={mainElements.length-index}> {rows} </tr>)
       }
     )
+    // setTable(tableElements)
     setHeader(headersOfTable)
     setMain(mainOfTable)
   }
@@ -72,34 +83,21 @@ function App() {
     }
   }
 
-  async function handleSorting(type, length) {
-    const inputElement = document.getElementById("input_file")
-    const inputFile = await readXlsxFile(inputElement.files[0])
+  function handleSorting(type, length) {
     const newEmptyArray = []
-    if(type == "ascending") {
-      for(var i=1; i<length; i++) {
-        var cellsArray = []
-        for(var j=0; j<inputFile[0].length; j++) {
-          cellsArray.push(<td key={`${i}${j}`} id={`r${i}c${j}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}> {inputFile[i][j]} </td>)
-        }
-        newEmptyArray.push(<tr className="rows" id={i} key={i}> {cellsArray} </tr>)
-      }
-    } else if(type == "descending") {
-      for(var i=length-1; i>0; i--) {
-        var cellsArray = []
-        for(var j=0; j<inputFile[0].length; j++) {
-          cellsArray.push(<td key={`${i}${j}`} id={`r${i}c${j}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}> {inputFile[i][j]} </td>)
-        }
-        newEmptyArray.push(<tr className="rows" id={i} key={i}> {cellsArray} </tr>)
-      }
+    // if(type == "ascending") {} else if(type == "descending") {}
+    for(var i=1; i<length; i++) {
+      // newEmptyArray.push(document.getElementById(i))
+      newEmptyArray.push(<tr className="rows" id={mainElements.length-index} key={mainElements.length-index}> {rows} </tr>)
     }
     setMain(newEmptyArray)
   }
 
   return (
     <div className="App">
-      <input type="file" id="input_file" onChange={(e) => {handleTable(e.currentTarget)}}></input>
+      <input type="file" onChange={(e) => {handleTable(e.currentTarget)}}></input>
       <table className="table" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+        {/* {table} */}
         {header}
         {main}
       </table>
