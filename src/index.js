@@ -23,3 +23,4 @@ root.render(
 reportWebVitals();
 
 // npm install read-excel-file --save
+// npm install react-plotly.js plotly.js

@@ -1,16 +1,23 @@
 import React, { Fragment } from 'react';
 import readXlsxFile from 'read-excel-file';
+import Plot from 'react-plotly.js';
 import { useState, useEffect, useRef } from 'react';
 import './global.css';
 
 function App() {
   const [header, setHeader] = useState(null)
   const [main, setMain] = useState(null)
+  const [statCount, setStatCount] = useState(null)
+  const [displayPie, setDisplayPie] = useState('none')
+  const [displayBar, setDisplayBar] = useState('none')
 
   async function handleTable(file) {
     const inputFile = await readXlsxFile(file.files[0])
     const headElements = []
     const mainElements = []
+    var stat_0 = 0
+    var stat_1 = 0
+    var stat_2 = 0
     for(var row=inputFile.length-1; row>=0; row--) {
       var cellsArr = []
       if(row==inputFile.length-1) {
@@ -46,6 +53,13 @@ function App() {
             }
           </td>)
         }
+        if(inputFile[row+1][3] == 0) {
+          stat_0++
+        } else if (inputFile[row+1][3] == 1) {
+          stat_1++
+        } else if(inputFile[row+1][3] == 2) {
+          stat_2++
+        }
         mainElements.push(cellsArr)
       }
     }
@@ -68,6 +82,7 @@ function App() {
     setHeader(headersOfTable)
     setMain(mainOfTable)
     localStorage.setItem("rows", JSON.stringify(mainOfTable))
+    setStatCount([stat_0, stat_1, stat_2])
   }
 
   function handleSearch(element, length) {
@@ -149,6 +164,9 @@ function App() {
     const tempArr = []
     var min = 1
     var max = main.length
+    var stat_0 = statCount[0]
+    var stat_1 = statCount[1]
+    var stat_2 = statCount[2]
     for(var max; max>=min; max--) {
       for(var i=0; i<main.length; i++) {
         if(main[i].key == max) {
@@ -178,6 +196,13 @@ function App() {
         cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
           {document.getElementById("status").value}
         </td>)
+        if(document.getElementById("status").value == 0) {
+          stat_0++
+        } else if (document.getElementById("status").value == 1) {
+          stat_1++
+        } else if(document.getElementById("status").value == 2) {
+          stat_2++
+        }
       } else if(x==4) {
         cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
           <>
@@ -191,21 +216,44 @@ function App() {
     tempArr.unshift(<tr className="rows" id={main.length+1} key={main.length+1}> {cellsArray} </tr>)
     setMain(tempArr)
     localStorage.setItem("rows", JSON.stringify(tempArr))
+    setStatCount([stat_0, stat_1, stat_2])
   }
 
   function deleteRow(id) {
-    document.getElementById("del_overlay").style.display = `block`
-    document.getElementById("del_window").style.display = `flex`
-    // console.log("delete row ID " + id)
     const currentID = JSON.parse(id.split("btn_")[1].split("_del")[0])
-    // console.log(typeof currentID)
-    JSON.parse(localStorage.getItem("rows")).map(
-      (element) => {
-        if(element.props.id == currentID) {
-          console.log(element)
+    const storedArr = JSON.parse(localStorage.getItem("rows"))
+    const reducedArray = []
+    var stat_0 = statCount[0]
+    var stat_1 = statCount[1]
+    var stat_2 = statCount[2]
+    for(var i=0; i<storedArr.length; i++) {
+      var newEmptyArr = []
+      if(storedArr[i].props.id != currentID) {
+        for(var j=0; j<4+1; j++) {
+          newEmptyArr.push(
+            <td key={`${storedArr[i].key}${j}`} id={`r${storedArr[i].key}c${j}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+              {j != 4 ? storedArr[i].props.children[j] : <>
+                <button className="btn btn_del" id={storedArr[i].props.id} key={storedArr[i].key} onClick={(e) => {deleteRow(e.currentTarget.id)}}> Sil {storedArr[i].key} </button>
+                <button className="btn btn_edit" id={storedArr[i].props.id} key={storedArr[i].key} onClick={(e) => {editRow(e.currentTarget.id)}}> Redakte Et </button>
+                <button className="btn btn_show" id={storedArr[i].props.id} key={storedArr[i].key} onClick={(e) => {showOnMap(e.currentTarget.id)}}> Xeritede Goster </button>
+              </>}
+            </td>
+          )
         }
+        if(storedArr[i].props.children[3] == 0) {
+          stat_0--
+        } else if (storedArr[i].props.children[3] == 1) {
+          stat_1--
+        } else if(storedArr[i].props.children[3] == 2) {
+          stat_2--
+        }
+        reducedArray.push(<tr className="rows" id={storedArr[i].props.id} key={storedArr[i].props.id}> {newEmptyArr} </tr>)
       }
-    )
+    }
+    // setMain(reducedArray)
+    console.log(reducedArray)
+    localStorage.setItem("rows", JSON.stringify(reducedArray))
+    setStatCount([stat_0, stat_1, stat_2])
   }
 
   function editRow(id) {
@@ -291,19 +339,6 @@ function App() {
         {main}
       </table>
 
-      {/* Are you sure ? window for delete operation */}
-      <div id="del_overlay" className="overlay" style={{display: "none"}} onClick={(e) => {
-        e.currentTarget.style.display = `none`
-        document.getElementById("del_window").style.display = `none`
-      }}></div>
-      <div id="del_window" className="window" style={{display: "none"}}>
-        <p> Are you sure ? </p>
-        <div>
-          <button> Yes </button>
-          <button> No </button>
-        </div>
-      </div>
-
       {/* Copy of add data window but for editing */}
       <div id="edit_overlay" className="overlay" style={{display: "none"}} onClick={(e) => {
         e.currentTarget.style.display = `none`
@@ -342,6 +377,45 @@ function App() {
           }}> Yadda Saxla </button>
         </div>
       </div>
+
+      {/* Diagram buttons */}
+      <div>
+        <button onClick={() => {
+          displayPie == 'block' ? setDisplayPie('none') : setDisplayPie('block')
+          setDisplayBar('none')
+        }}> Analiz 1 </button>
+        <button onClick={() => {
+          setDisplayPie('none')
+          displayBar == 'block' ? setDisplayBar('none') : setDisplayBar('block')
+        }}> Analiz 2 </button>
+      </div>
+
+      {/* Diagrams with ready script library */}
+      <Plot style={{display: displayPie}} data={[
+        {
+          labels: [0, 1, 2], // exist status numbers
+          values: statCount != null ? statCount : 0, // useState counts of each status
+          type: 'pie'
+        }
+      ]} layout={
+        {
+          width: '100%', height: '700px', title: 'Untitled'
+        }
+      } />
+      <Plot style={{display: displayBar}} data={[
+        {
+          x: [0, 1, 2], // exist status numbers
+          y: statCount != null ? statCount : 0, // useState counts of each status
+          type: 'bar',
+          // mode: 'lines+markers',
+          orientation: 'v',
+          marker: {color: 'rgba(255,128,0,0.8)'},
+        }
+      ]} layout={
+        {
+          width: 640, height: 480, title: 'Untitled'
+        }
+      } />
     </div>
   );
 }
