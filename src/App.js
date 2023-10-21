@@ -6,9 +6,6 @@ import './global.css';
 function App() {
   const [header, setHeader] = useState(null)
   const [main, setMain] = useState(null)
-  // const [dataAdded, setDataAdded] = useState(false)
-
-  // localStorage.setItem("dataAdded", JSON.stringify(false))
 
   async function handleTable(file) {
     const inputFile = await readXlsxFile(file.files[0])
@@ -21,7 +18,7 @@ function App() {
           cellsArr.push(<td key={`${0}${col}`} id={`r${0}c${col}`} className="headers" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
             <div className="headers__group">
               <span className="headers__group--content"> {inputFile[0][col]} </span>
-              <button className="headers__group--button" onClick={(e) => {
+              <button className="headers__group--button" id={`sort_${0}${col}`} onClick={(e) => {
                 if(e.currentTarget.style.transform != `rotate(180deg)`) {
                   e.currentTarget.style.transform = `rotate(180deg)`
                   handleSorting("ascending", inputFile.length)
@@ -38,9 +35,16 @@ function App() {
         }
         headElements.push(cellsArr)
       } else {
-        for(var col=0; col<inputFile[row].length; col++) {
-          cellsArr.push(<td key={`${row+1}${col}`} id={`r${row+1}c${col}`} className="cells" 
-          style={{border: "1px solid #000000", borderCollapse: "collapse"}}> {inputFile[row+1][col]} </td>)
+        for(var col=0; col<inputFile[row].length+1; col++) {
+          cellsArr.push(<td key={`${row+1}${col}`} id={`r${row+1}c${col}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+            {
+              col != 4 ? inputFile[row+1][col] : <>
+                <button className="btn btn_del" id={`btn_${row+1}_del`} key={`btn_${row+1}_del`} onClick={(e) => {deleteRow(e.currentTarget.id)}}> Sil {row+1} </button>
+                <button className="btn btn_edit" id={`btn_${row+1}_edit`} key={`btn_${row+1}_edit`} onClick={(e) => {editRow(e.currentTarget.id)}}> Redakte Et </button>
+                <button className="btn btn_show" id={`btn_${row+1}_show`} key={`btn_${row+1}_show`} onClick={(e) => {showOnMap(e.currentTarget.id)}}> Xeritede Goster </button>
+              </>
+            }
+          </td>)
         }
         mainElements.push(cellsArr)
       }
@@ -49,12 +53,16 @@ function App() {
     const mainOfTable = []
     headElements.map(
       (rows, index) => {
-        headersOfTable.push(<tr className="rows" id={0} key={0}> {rows} </tr>)
+        headersOfTable.push(<tr className="rows" id={0} key={0}>
+          {rows}
+        </tr>)
       }
     )
     mainElements.map(
       (rows, index) => {
-        mainOfTable.push(<tr className="rows" id={mainElements.length-index} key={mainElements.length-index}> {rows} </tr>)
+        mainOfTable.push(<tr className="rows" id={mainElements.length-index} key={mainElements.length-index}>
+          {rows}
+        </tr>)
       }
     )
     setHeader(headersOfTable)
@@ -77,18 +85,24 @@ function App() {
   function handleSorting(sort) {
     const currentRows = JSON.parse(localStorage.getItem("rows"))
     const newEmptyArray = []
-    // reset sort as descending when add new data | also reset button rotation if changed when add new data
-    // dataAdded == true ? sort = "descending" : sort = sort
     if(sort == "ascending") {
       for(var i=0; i<currentRows.length; i++) {
         var newArr = []
-        currentRows[i].props.children[1].map(
-          (cellData) => {
-            newArr.push(<td key={cellData.key} id={cellData.props.id} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-              {cellData.props.children}
-            </td>)
+        for(var j=0; j<4+1; j++) {
+          if(currentRows[i].props.children[4] == undefined) {
+            var anotherCells = currentRows[i].props.children[1][j].props.children
+          } else {
+            var anotherCells = currentRows[i].props.children[j].props.children
           }
-        )
+          const buttonsCell = <>
+            <button className="btn btn_del" id={`btn_${currentRows.length-i}_del`} key={`btn_${currentRows.length-i}_del`} onClick={(e) => {deleteRow(e.currentTarget.id)}}> Sil {currentRows.length-i} </button>
+            <button className="btn btn_edit" id={`btn_${currentRows.length-i}_edit`} key={`btn_${currentRows.length-i}_edit`} onClick={(e) => {editRow(e.currentTarget.id)}}> Redakte Et </button>
+            <button className="btn btn_show" id={`btn_${currentRows.length-i}_show`} key={`btn_${currentRows.length-i}_show`} onClick={(e) => {showOnMap(e.currentTarget.id)}}> Xeritede Goster </button>
+          </>
+          newArr.push(<td key={`${i+1}${j}`} id={`r${i+1}c${j}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+            {j != 4 ? anotherCells : buttonsCell}
+          </td>)
+        }
         newEmptyArray.unshift(
           <tr className="rows" key={currentRows[i].key} id={currentRows[i].props.id}> {newArr} </tr>
         )
@@ -96,13 +110,21 @@ function App() {
     } else if(sort == "descending") {
       for(var i=0; i<currentRows.length; i++) {
         var newArr = []
-        currentRows[i].props.children[1].map(
-          (cellData) => {
-            newArr.push(<td key={cellData.key} id={cellData.props.id} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-              {cellData.props.children}
-            </td>)
+        for(var j=0; j<4+1; j++) {
+          if(currentRows[i].props.children[4] == undefined) {
+            var anotherCells = currentRows[i].props.children[1][j].props.children
+          } else {
+            var anotherCells = currentRows[i].props.children[j].props.children
           }
-        )
+          const buttonsCell = <>
+            <button className="btn btn_del" id={`btn_${currentRows.length-i}_del`} key={`btn_${currentRows.length-i}_del`} onClick={(e) => {deleteRow(e.currentTarget.id)}}> Sil {currentRows.length-i} </button>
+            <button className="btn btn_edit" id={`btn_${currentRows.length-i}_edit`} key={`btn_${currentRows.length-i}_edit`} onClick={(e) => {editRow(e.currentTarget.id)}}> Redakte Et </button>
+            <button className="btn btn_show" id={`btn_${currentRows.length-i}_show`} key={`btn_${currentRows.length-i}_show`} onClick={(e) => {showOnMap(e.currentTarget.id)}}> Xeritede Goster </button>
+          </>
+          newArr.push(<td key={`${i+1}${j}`} id={`r${i+1}c${j}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+            {j != 4 ? anotherCells : buttonsCell}
+          </td>)
+        }
         newEmptyArray.push(
           <tr className="rows" key={currentRows[i].key} id={currentRows[i].props.id}> {newArr} </tr>
         )
@@ -124,75 +146,112 @@ function App() {
   }
 
   function addData() {
-    // reorder current array first for sorting
+    const tempArr = []
+    var min = 1
+    var max = main.length
+    for(var max; max>=min; max--) {
+      for(var i=0; i<main.length; i++) {
+        if(main[i].key == max) {
+          tempArr.push(main[i])
+        }
+      }
+    }
+    document.getElementById(`sort_${0}${0}`).style.transform = `rotate(0deg)`
+    document.getElementById(`sort_${0}${1}`).style.transform = `rotate(0deg)`
+    document.getElementById(`sort_${0}${2}`).style.transform = `rotate(0deg)`
+    document.getElementById(`sort_${0}${3}`).style.transform = `rotate(0deg)`
+    const cellsArray = []
+    for(var x=0; x<4+1; x++) {
+      if(x==0) {
+        cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+          {main.length+1}
+        </td>)
+      } else if(x==1) {
+        cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+          {document.getElementById("newLen").value}
+        </td>)
+      } else if(x==2) {
+        cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+          {/* empty slot */}
+        </td>)
+      } else if(x==3) {
+        cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+          {document.getElementById("status").value}
+        </td>)
+      } else if(x==4) {
+        cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
+          <>
+            <button className="btn btn_del" id={`btn_${main.length+1}_del`} key={`btn_${main.length+1}_del`} onClick={(e) => {deleteRow(e.currentTarget.id)}}> Sil {main.length+1} </button>
+            <button className="btn btn_edit" id={`btn_${main.length+1}_edit`} key={`btn_${main.length+1}_edit`} onClick={(e) => {editRow(e.currentTarget.id)}}> Redakte Et </button>
+            <button className="btn btn_show" id={`btn_${main.length+1}_show`} key={`btn_${main.length+1}_show`} onClick={(e) => {showOnMap(e.currentTarget.id)}}> Xeritede Goster </button>
+          </>
+        </td>)
+      }
+    }
+    tempArr.unshift(<tr className="rows" id={main.length+1} key={main.length+1}> {cellsArray} </tr>)
+    setMain(tempArr)
+    localStorage.setItem("rows", JSON.stringify(tempArr))
+  }
 
-    // const tempArr = []
-    // const rowKeys = []
-    // main.map(
-    //   (row) => {
-    //     rowKeys.push(JSON.stringify(row.key))
-    //   }
-    // )
-    // var min = Math.min(...rowKeys) // main[i].key
-    // var max = Math.max(...rowKeys)
-    // for(var max; max>=min; max--) {
-    //   if(rowKeys.includes(max)) {
-    //     tempArr.push(max)
-    //   }
-    // }
-    // console.log(tempArr)
+  function deleteRow(id) {
+    document.getElementById("del_overlay").style.display = `block`
+    document.getElementById("del_window").style.display = `flex`
+    // console.log("delete row ID " + id)
+    const currentID = JSON.parse(id.split("btn_")[1].split("_del")[0])
+    // console.log(typeof currentID)
+    JSON.parse(localStorage.getItem("rows")).map(
+      (element) => {
+        if(element.props.id == currentID) {
+          console.log(element)
+        }
+      }
+    )
+  }
 
-    // for(var i=0; i<main.length; i++) {
-    //   var currentKey = JSON.parse(main[i].key)
-    //   if(currentKey == i) {
-    //     tempArr.push(main[i])
-    //   }
-    // }
-    
-    // main.map(
-    //   (row) => {
-    //     tempArr.push(row)
-    //   }
-    // )
-    // const cellsArray = []
-    // for(var x=0; x<4; x++) {
-    //   if(x==0) {
-    //     cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-    //       {main.length+1}
-    //     </td>)
-    //   } else if(x==1) {
-    //     cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-    //       {document.getElementById("newLen").value}
-    //     </td>)
-    //   } else if(x==2) {
-    //     cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-    //       {/* empty slot */}
-    //     </td>)
-    //   } else if(x==3) {
-    //     cellsArray.push(<td key={`${main.length+1}${x}`} id={`r${main.length+1}c${x}`} className="cells" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
-    //       {document.getElementById("status").value}
-    //     </td>)
-    //   }
-    // }
-    // tempArr.unshift(<tr className="rows" id={main.length+1} key={main.length+1}> {cellsArray} </tr>)
-    // // setDataAdded(true)
-    // setMain(tempArr)
-    // localStorage.setItem("rows", JSON.stringify(tempArr))
+  function editRow(id) {
+    document.getElementById("edit_overlay").style.display = `block`
+    document.getElementById("edit_window").style.display = `flex`
+    // console.log("edit row No " + id)
+    const currentID = JSON.parse(id.split("btn_")[1].split("_edit")[0])
+    // console.log(typeof currentID)
+    JSON.parse(localStorage.getItem("rows")).map(
+      (element) => {
+        if(element.props.id == currentID) {
+          console.log(element)
+        }
+      }
+    )
+  }
+
+  function showOnMap(id) {
+    // console.log("show on the map data of row " + id)
+    const currentID = JSON.parse(id.split("btn_")[1].split("_show")[0])
+    // console.log(typeof currentID)
+    JSON.parse(localStorage.getItem("rows")).map(
+      (element) => {
+        if(element.props.id == currentID) {
+          console.log(element)
+        }
+      }
+    )
   }
 
   return (
     <div className="App">
+      {/* Load file button */}
       <label>
         Load Excel File
         <input type="file" id="input_file" onChange={(e) => {handleTable(e.currentTarget)}}></input>
       </label>
 
+      {/* Add new data button */}
       <button id="button4add" onClick={() => {
         document.getElementById("overlay").style.display = `block`
         document.getElementById("window").style.display = `flex`
       }}> + Add New Data </button>
 
-      <div id="overlay" style={{display: "none"}} onClick={(e) => {
+      {/* Add new data window */}
+      <div id="overlay" className="overlay" style={{display: "none"}} onClick={(e) => {
         e.currentTarget.style.display = `none`
         document.getElementById("window").style.display = `none`
       }}></div>
@@ -226,10 +285,63 @@ function App() {
         </div>
       </div>
 
+      {/* Table */}
       <table className="table" style={{border: "1px solid #000000", borderCollapse: "collapse"}}>
         {header}
         {main}
       </table>
+
+      {/* Are you sure ? window for delete operation */}
+      <div id="del_overlay" className="overlay" style={{display: "none"}} onClick={(e) => {
+        e.currentTarget.style.display = `none`
+        document.getElementById("del_window").style.display = `none`
+      }}></div>
+      <div id="del_window" className="window" style={{display: "none"}}>
+        <p> Are you sure ? </p>
+        <div>
+          <button> Yes </button>
+          <button> No </button>
+        </div>
+      </div>
+
+      {/* Copy of add data window but for editing */}
+      <div id="edit_overlay" className="overlay" style={{display: "none"}} onClick={(e) => {
+        e.currentTarget.style.display = `none`
+        document.getElementById("edit_window").style.display = `none`
+      }}></div>
+      <div id="edit_window" className="window" style={{display: "none"}}>
+        <div className="window__header">
+          <h3 className="window__header--h3"> Baslik </h3>
+          <p className="window__header--p"> Alt Tanimlama </p>
+        </div>
+        <div className="window__label">
+          <p className="window__label--title"> Len Bilgisini Giriniz </p>
+          <input type="text" id="editLen" className="window__label--input" />
+        </div>
+        <div className="window__label">
+          <p className="window__label--title"> Wkt Bilgisini Giriniz </p>
+          <input type="text" id="editWkt" className="window__label--input" />
+        </div>
+        <div className="window__label">
+          <p className="window__label--title"> Status Seciniz </p>
+          <select name="status" id="editStatus" className="window__label--input">
+            <option value="0"> 0 </option>
+            <option value="1"> 1 </option>
+            <option value="2"> 2 </option>
+          </select>
+        </div>
+        <div className="window__buttons">
+          <button id="editBtn_discard" className="window__buttons--btn" onClick={() => {
+            // document.getElementById("overlay").style.display = `none`
+            // document.getElementById("window").style.display = `none`
+          }}> Legv Et </button>
+          <button id="editBtn_save" className="window__buttons--btn" onClick={() => {
+            // addData()
+            // document.getElementById("overlay").style.display = `none`
+            // document.getElementById("window").style.display = `none`
+          }}> Yadda Saxla </button>
+        </div>
+      </div>
     </div>
   );
 }
